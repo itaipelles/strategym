@@ -1,6 +1,7 @@
 import numpy as np
 import gymnasium as gym
 from gymnasium import spaces
+from battle_calculator import infantry_battle
 
 territories = [0,1,2,3,4,5]
 adjacencies = [(0,1), (0,2), (1,3), (2,4), (3,5), (4,5)]
@@ -45,6 +46,7 @@ class AxisAndAlliesGame(gym.Env):
         info = None
 
         current_player_infantry = self.observation['player2_infantry'] if self.current_player_turn else self.observation['player1_infantry']
+        other_player_infantry = self.observation['player1_infantry'] if self.current_player_turn else self.observation['player2_infantry']
         infantry_to_move_per_adjacency = []
         sum_of_infantry_leaving_each_territory = np.zeros(num_of_territories)
         contested_territories = []
@@ -61,9 +63,17 @@ class AxisAndAlliesGame(gym.Env):
         for infantry_to_move, (from_territory, to_territory) in zip(infantry_to_move_per_adjacency, adjacencies):
             current_player_infantry[from_territory] -= infantry_to_move
             current_player_infantry[to_territory] += infantry_to_move
-            if self.observation['territory_owner'][to_territory] != self.current_player_turn:
+            if current_player_infantry[to_territory]>0 and self.observation['territory_owner'][to_territory] != self.current_player_turn:
                 contested_territories.append(to_territory)
         
+        for territory in np.unique(contested_territories):
+            new_attack_inf, new_defend_inf = infantry_battle(current_player_infantry[territory], other_player_infantry[territory])
+            print(f'Combat! territory {territory} attack {current_player_infantry[territory]} -> {new_attack_inf}, defend {other_player_infantry[territory]} -> {new_defend_inf}')
+            current_player_infantry[territory] = new_attack_inf
+            other_player_infantry[territory] = new_defend_inf
+            if new_attack_inf > 0:
+                self.observation['territory_owner'][to_territory] = self.current_player_turn
+
         self.current_player_turn = not self.current_player_turn
         return self.observation, reward, False, False, info
 
