@@ -13,12 +13,11 @@ movement_action_space = spaces.Box(low=0.0, high=1.0, shape=(num_of_adjacencies,
 
 MAX_INFANTRY_PER_TERRITORY = 50
 player_infantry_shape = MAX_INFANTRY_PER_TERRITORY*np.ones(num_of_territories)
-territory_owner_shape = np.ones(num_of_territories)
 
 observation_space = spaces.Dict({
     'player1_infantry': spaces.MultiDiscrete(player_infantry_shape),
     'player2_infantry': spaces.MultiDiscrete(player_infantry_shape),
-    'territory_owner': spaces.MultiDiscrete(territory_owner_shape),
+    'territory_owner': spaces.MultiBinary(num_of_territories),
 })
 
 opening_observation = {
@@ -72,8 +71,15 @@ game = AxisAndAlliesGame()
 obs, info = game.reset()
 print('first observation after reset: ', obs)
 
-action = movement_action_space.sample()
-print('random action: ', action)
+num_of_steps = 2
+for i in range(num_of_steps):
+    action = movement_action_space.sample()
+    print(f'random action {i+1}: ', action)
 
-observation, reward, terminated, truncated, info = game.step(action)
-print('after step: ', observation, reward, terminated)
+    observation, reward, terminated, truncated, info = game.step(action)
+    if terminated or truncated:
+        print('Game over..')
+        break
+    else:
+        print(f'after step {i+1}: ', observation, reward, terminated)
+
