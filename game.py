@@ -1,5 +1,4 @@
 import numpy as np
-import copy
 import gymnasium as gym
 from gymnasium import spaces
 
@@ -8,12 +7,13 @@ adjacencies = [(0,1), (0,2), (1,3), (2,4), (3,5), (4,5)]
 inverse_adjacencies = [(j,i) for (i,j) in adjacencies]
 adjacencies = adjacencies + inverse_adjacencies
 
-total_num_of_adjacencies = len(adjacencies)
-movement_action_space = spaces.Box(low=0.0, high=1.0, shape=(total_num_of_adjacencies,))
+num_of_territories = len(territories)
+num_of_adjacencies = len(adjacencies)
+movement_action_space = spaces.Box(low=0.0, high=1.0, shape=(num_of_adjacencies,))
 
 MAX_INFANTRY_PER_TERRITORY = 50
-player_infantry_shape = MAX_INFANTRY_PER_TERRITORY*np.ones(len(territories))
-territory_owner_shape = np.ones(len(territories))
+player_infantry_shape = MAX_INFANTRY_PER_TERRITORY*np.ones(num_of_territories)
+territory_owner_shape = np.ones(num_of_territories)
 
 observation_space = spaces.Dict({
     'player1_infantry': spaces.MultiDiscrete(player_infantry_shape),
@@ -42,16 +42,22 @@ class AxisAndAlliesGame(gym.Env):
         return self.observation, info
     
     def step(self, action):
-        terminated = False
         reward = 1
         info = None
 
         current_player_infantry = self.observation['player2_infantry'] if self.current_player_turn else self.observation['player1_infantry']
         infantry_to_move_per_adjacency = []
+        sum_of_infantry_leaving_each_territory = np.zeros(num_of_territories)
         contested_territories = []
         for percentage, (from_territory, to_territory) in zip(action, adjacencies):
             infantry_to_move = np.floor(percentage * current_player_infantry[from_territory])
             infantry_to_move_per_adjacency.append(infantry_to_move)
+            sum_of_infantry_leaving_each_territory[from_territory] += infantry_to_move
+
+        for existing_infantry, leaving_infantry in zip(current_player_infantry, sum_of_infantry_leaving_each_territory):
+            if leaving_infantry > existing_infantry:
+                # invalid move! terminating game. maybe we don't have to terminate?
+                return self.observation, -1000, True, False, info
 
         for infantry_to_move, (from_territory, to_territory) in zip(infantry_to_move_per_adjacency, adjacencies):
             current_player_infantry[from_territory] -= infantry_to_move
@@ -59,7 +65,8 @@ class AxisAndAlliesGame(gym.Env):
             if self.observation['territory_owner'][to_territory] != self.current_player_turn:
                 contested_territories.append(to_territory)
         
-        return self.observation, reward, terminated, False, info
+        self.current_player_turn = not self.current_player_turn
+        return self.observation, reward, False, False, info
 
 game = AxisAndAlliesGame()
 obs, info = game.reset()
@@ -69,4 +76,4 @@ action = movement_action_space.sample()
 print('random action: ', action)
 
 observation, reward, terminated, truncated, info = game.step(action)
-print('observation after step: ', observation)
+print('after step: ', observation, reward, terminated)
