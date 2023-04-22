@@ -27,6 +27,9 @@ opening_observation = {
     'territory_owner': [0,0,0,1,1,1]
 }
 
+P1_CAPITAL = 0
+P2_CAPITAL = 5
+
 class AxisAndAlliesGame(gym.Env):
     def __init__(self):
         pass
@@ -44,6 +47,7 @@ class AxisAndAlliesGame(gym.Env):
     def step(self, action):
         reward = 1
         info = None
+        terminated = False
 
         current_player_infantry = self.observation['player2_infantry'] if self.current_player_turn else self.observation['player1_infantry']
         other_player_infantry = self.observation['player1_infantry'] if self.current_player_turn else self.observation['player2_infantry']
@@ -57,8 +61,8 @@ class AxisAndAlliesGame(gym.Env):
 
         for existing_infantry, leaving_infantry in zip(current_player_infantry, sum_of_infantry_leaving_each_territory):
             if leaving_infantry > existing_infantry:
-                # invalid move! terminating game. maybe we don't have to terminate?
-                return self.observation, -1000, True, False, info
+                # invalid move! skipping move. maybe we have to terminate?
+                return self.observation, -1000, False, False, info
 
         for infantry_to_move, (from_territory, to_territory) in zip(infantry_to_move_per_adjacency, adjacencies):
             current_player_infantry[from_territory] -= infantry_to_move
@@ -72,22 +76,28 @@ class AxisAndAlliesGame(gym.Env):
             current_player_infantry[territory] = new_attack_inf
             other_player_infantry[territory] = new_defend_inf
             if new_attack_inf > 0:
-                self.observation['territory_owner'][to_territory] = self.current_player_turn
+                self.observation['territory_owner'][territory] = self.current_player_turn
+
+        p1_lost = self.observation['territory_owner'][P1_CAPITAL] == 1
+        p2_lost = self.observation['territory_owner'][P2_CAPITAL] == 0
+        if p1_lost or p2_lost:
+            terminated = True
 
         self.current_player_turn = not self.current_player_turn
-        return self.observation, reward, False, False, info
+        return self.observation, reward, terminated, False, info
 
 game = AxisAndAlliesGame()
 obs, info = game.reset()
 print('first observation after reset: ', obs)
 
-num_of_steps = 2
+num_of_steps = 50
 for i in range(num_of_steps):
     action = movement_action_space.sample()
     print(f'random action {i+1}: ', action)
 
     observation, reward, terminated, truncated, info = game.step(action)
     if terminated or truncated:
+        print(f'after step {i+1}: ', observation, reward, terminated)
         print('Game over..')
         break
     else:
