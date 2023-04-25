@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 
 territories = [0,1,2,3,4,5]
+territory_values = [6,3,3,3,3,6]
 adjacencies = [(0,1), (0,2), (1,3), (2,4), (3,5), (4,5)]
 inverse_adjacencies = [(j,i) for (i,j) in adjacencies]
 adjacencies = adjacencies + inverse_adjacencies
@@ -32,6 +33,9 @@ opening_observation = {
 
 P1_CAPITAL = 0
 P2_CAPITAL = 5
+capital_per_player = [P1_CAPITAL,P2_CAPITAL]
+
+COST_OF_INFANTRY = 3
 
 class AxisAndAlliesEnv(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"]}
@@ -96,6 +100,11 @@ class AxisAndAlliesEnv(gym.Env):
         p2_lost = self.observation['territory_owner'][P2_CAPITAL] == 0
         if p1_lost or p2_lost:
             terminated = True
+
+        if not terminated:
+            income = np.sum([territory_value for territory, territory_value in enumerate(territory_values) if self.observation['territory_owner'][territory] == self.current_player_turn])
+            new_infantry_amount = np.floor(income/COST_OF_INFANTRY)
+            current_player_infantry[capital_per_player[self.current_player_turn]] += new_infantry_amount
 
         self.current_player_turn = not self.current_player_turn
             
