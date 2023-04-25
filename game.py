@@ -18,7 +18,7 @@ movement_action_space = spaces.Box(low=0.0, high=1.0, shape=(num_of_adjacencies,
 MAX_INFANTRY_PER_TERRITORY = 50
 player_infantry_shape = MAX_INFANTRY_PER_TERRITORY*np.ones(num_of_territories)
 
-observation_space = spaces.Dict({
+_observation_space = spaces.Dict({
     'player1_infantry': spaces.MultiDiscrete(player_infantry_shape),
     'player2_infantry': spaces.MultiDiscrete(player_infantry_shape),
     'territory_owner': spaces.MultiBinary(num_of_territories),
@@ -33,8 +33,10 @@ opening_observation = {
 P1_CAPITAL = 0
 P2_CAPITAL = 5
 
-class AxisAndAlliesGame(gym.Env):
+class AxisAndAlliesEnv(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"]}
+    observation_space = _observation_space
+    action_space = movement_action_space
 
     def __init__(self,  render_mode="human"):
         self.G = nx.Graph()
@@ -109,7 +111,7 @@ class AxisAndAlliesGame(gym.Env):
         # nx.set_node_attributes(G, dict(zip(territories,obs['player1_infantry'])), name = 'p1_infantry')
         # nx.set_node_attributes(G, dict(zip(territories,obs['player2_infantry'])), name = 'p2_infantry')
         
-        self.fig = plt.figure()
+        fig = plt.figure()
         G_p1_pos = self.G_node_pos.copy()
         G_p2_pos = self.G_node_pos.copy()
         for i, key in (self.G_node_pos.items()):
@@ -122,7 +124,7 @@ class AxisAndAlliesGame(gym.Env):
 
         nx.draw_networkx_labels(self.G,G_p1_pos, labels = dict(zip(territories,self.observation['player1_infantry'])), font_color = "blue")
         nx.draw_networkx_labels(self.G,G_p2_pos, labels = dict(zip(territories,self.observation['player2_infantry'])), font_color = "red")
-        self.fig.canvas.draw()
+        fig.canvas.draw()
 
         if(record_flag):
             self.recordFrame()
@@ -130,24 +132,25 @@ class AxisAndAlliesGame(gym.Env):
         if self.render_mode == "human":
             plt.show()
         elif self.render_mode == "rgb_array":
-            return np.array(self.fig.canvas.renderer.buffer_rgba())
+            return np.array(fig.canvas.renderer.buffer_rgba())
 
-game = AxisAndAlliesGame(render_mode="human")
-obs, info = game.reset()
-print('first observation after reset: ', obs)
-game.render()
-num_of_steps = 4
-for i in range(num_of_steps):
-    action = movement_action_space.sample()
-    print(f'random action {i+1}: ', action)
-    observation, reward, terminated, truncated, info = game.step(action)
-
+if __name__ == "__main__":
+    game = AxisAndAlliesEnv(render_mode="human")
+    obs, info = game.reset()
+    print('first observation after reset: ', obs)
     game.render()
+    num_of_steps = 4
+    for i in range(num_of_steps):
+        action = movement_action_space.sample()
+        print(f'random action {i+1}: ', action)
+        observation, reward, terminated, truncated, info = game.step(action)
 
-    if terminated or truncated:
-        print(f'after step {i+1}: ', observation, reward, terminated)
-        print('Game over..')
-        break
-    else:
-        print(f'after step {i+1}: ', observation, reward, terminated)
+        game.render()
+
+        if terminated or truncated:
+            print(f'after step {i+1}: ', observation, reward, terminated)
+            print('Game over..')
+            break
+        else:
+            print(f'after step {i+1}: ', observation, reward, terminated)
 
