@@ -36,14 +36,12 @@ P2_CAPITAL = 5
 class AxisAndAlliesGame(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"]}
 
-    def __init__(self,  render_mode="rgb_array"):
+    def __init__(self,  render_mode="human"):
         self.G = nx.Graph()
         self.G.add_nodes_from(territories)
         self.G.add_edges_from(inverse_adjacencies)
         self.G_node_pos = nx.spring_layout(self.G) # sometimes this auto layout fails (see failed_layout_example.png). any solutions?
-        assert render_mode is None or render_mode in self.metadata["render_modes"]
         self.render_mode = render_mode
-        self.fig = plt.figure()
         pass
 
     def reset(self, seed=None, options=None):
@@ -54,9 +52,6 @@ class AxisAndAlliesGame(gym.Env):
         self.observation = opening_observation
         self.current_player_turn = 0
         info = None
-        if self.render_mode == "human":
-            self._render_frame()
-            self.showRender(rgba_mat)
         return self.observation, info
     
     def step(self, action):
@@ -101,36 +96,20 @@ class AxisAndAlliesGame(gym.Env):
             terminated = True
 
         self.current_player_turn = not self.current_player_turn
-        if self.render_mode == "human":
-            rgba_mat = self._render_frame()
-            self.showRender(rgba_mat)
             
         return self.observation, reward, terminated, truncated, info
-    
-    def render(self):
-        if self.render_mode == "rgb_array":
-            return self._render_frame()
-        
-    def showRender(self, rgba_mat):
-        # This function is called twice in "human" render mode (as we normally also call it outside the step). it doesn't REALLY matter, but still.
-        plt.axis('off')
-        plt.tight_layout()
-        plt.imshow(rgba_mat)
-        if self.render_mode == "rgb_array":
-            plt.show()
-        elif self.render_mode == "human":
-            plt.show(block=False)
-
-    def saveRender(rgba_mat):
+   
+    def recordFrame(self):
         #TODO: make this function save and image for each frame instead of overwriting it. maybe even open a new folder for each run?
-        img = Image.fromarray(rgba_mat, 'RGBA')
-        img.save('testrgb.png')
+        save_path = 'last_frame.png'
+        plt.savefig(save_path)
     
-    def _render_frame(self):
+    def render(self, record_flag:bool = False):
         # the commented lines might be needed when we scale to more types of units. for now i print the infantries directly
         # nx.set_node_attributes(G, dict(zip(territories,obs['player1_infantry'])), name = 'p1_infantry')
         # nx.set_node_attributes(G, dict(zip(territories,obs['player2_infantry'])), name = 'p2_infantry')
         
+        self.fig = plt.figure()
         G_p1_pos = self.G_node_pos.copy()
         G_p2_pos = self.G_node_pos.copy()
         for i, key in (self.G_node_pos.items()):
@@ -143,25 +122,27 @@ class AxisAndAlliesGame(gym.Env):
 
         nx.draw_networkx_labels(self.G,G_p1_pos, labels = dict(zip(territories,self.observation['player1_infantry'])), font_color = "blue")
         nx.draw_networkx_labels(self.G,G_p2_pos, labels = dict(zip(territories,self.observation['player2_infantry'])), font_color = "red")
-
         self.fig.canvas.draw()
-        rgba_mat = np.array(self.fig.canvas.renderer.buffer_rgba())
-        plt.clf()
-        return rgba_mat 
 
-game = AxisAndAlliesGame(render_mode="rgb_array")
+        if(record_flag):
+            self.recordFrame()
+
+        if self.render_mode == "human":
+            plt.show()
+        elif self.render_mode == "rgb_array":
+            return np.array(self.fig.canvas.renderer.buffer_rgba())
+
+game = AxisAndAlliesGame(render_mode="human")
 obs, info = game.reset()
 print('first observation after reset: ', obs)
-
-rgba_mat = game.render()
-game.showRender(game.render())
-
-num_of_steps = 1
+game.render()
+num_of_steps = 4
 for i in range(num_of_steps):
     action = movement_action_space.sample()
     print(f'random action {i+1}: ', action)
     observation, reward, terminated, truncated, info = game.step(action)
-    game.showRender(game.render())
+
+    game.render()
 
     if terminated or truncated:
         print(f'after step {i+1}: ', observation, reward, terminated)
