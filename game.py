@@ -78,7 +78,7 @@ class AxisAndAlliesGame(gym.Env):
         for existing_infantry, leaving_infantry in zip(current_player_infantry, sum_of_infantry_leaving_each_territory):
             if leaving_infantry > existing_infantry:
                 # invalid move! skipping move. maybe we have to terminate?
-                reward = -1000
+                reward = -1000 * (leaving_infantry - existing_infantry)
                 return self.observation, reward, terminated, truncated, info
 
         for infantry_to_move, (from_territory, to_territory) in zip(infantry_to_move_per_adjacency, adjacencies):
@@ -144,7 +144,6 @@ class AxisAndAlliesGame(gym.Env):
         nx.draw_networkx_labels(self.G,G_p1_pos, labels = dict(zip(territories,self.observation['player1_infantry'])), font_color = "blue")
         nx.draw_networkx_labels(self.G,G_p2_pos, labels = dict(zip(territories,self.observation['player2_infantry'])), font_color = "red")
 
-        
         self.fig.canvas.draw()
         rgba_mat = np.array(self.fig.canvas.renderer.buffer_rgba())
         plt.clf()
