@@ -61,7 +61,6 @@ class AxisAndAlliesEnv(gym.Env):
         return self.observation, info
     
     def step(self, action):
-        reward = 1
         info = None
         terminated = False
         truncated = False
@@ -102,9 +101,15 @@ class AxisAndAlliesEnv(gym.Env):
             terminated = True
 
         if not terminated:
+            # TODO: keep income value in observation from last turn and use that instead
             income = np.sum([territory_value for territory, territory_value in enumerate(territory_values) if self.observation['territory_owner'][territory] == self.current_player_turn])
             new_infantry_amount = np.floor(income/COST_OF_INFANTRY)
             current_player_infantry[capital_per_player[self.current_player_turn]] += new_infantry_amount
+            current_player_units_value = COST_OF_INFANTRY * np.sum(current_player_infantry)
+            other_player_units_value = COST_OF_INFANTRY * np.sum(other_player_infantry)
+            reward = income + current_player_units_value - other_player_units_value
+        else:
+            reward = 1000
 
         self.current_player_turn = not self.current_player_turn
             
