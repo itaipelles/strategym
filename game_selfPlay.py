@@ -24,7 +24,7 @@ class AxisAndAlliesEnv_selfPlay(AxisAndAlliesEnv):
         else:
             action_AI, _ = self.AI_policy.predict(observation)
 
-        new_observation, new_reward, terminated, truncated, = super().step(action_AI)
+        new_observation, new_reward, terminated, truncated, new_info= super().step(action_AI)
         return new_observation, reward + new_reward, terminated, truncated, info
         
     def reset(self):
