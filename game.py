@@ -52,16 +52,17 @@ class AxisAndAlliesEnv(gym.Env):
         pass
 
     def reset(self, seed=None, options=None):
-        # TODO: copy the opening observation
         self.observation = copy.deepcopy(self.opening_observation)
         self.current_player_turn = 0
-        info = {}
+        info = {'is_success' : False}
         return self.observation, info
     
     def step(self, action):
         info = {}
         terminated = False
         truncated = False
+        reward = 0
+        prev_board_score = self.boardScore()
 
         current_player_infantry = self.observation['player2_infantry'] if self.current_player_turn else self.observation['player1_infantry']
         other_player_infantry = self.observation['player1_infantry'] if self.current_player_turn else self.observation['player2_infantry']
@@ -75,8 +76,10 @@ class AxisAndAlliesEnv(gym.Env):
 
         for existing_infantry, leaving_infantry in zip(current_player_infantry, sum_of_infantry_leaving_each_territory):
             if leaving_infantry > existing_infantry:
-                # invalid move! skipping move. maybe we have to terminate?
-                reward = -1000 * (leaving_infantry - existing_infantry)
+                if not self.current_player_turn:
+                    terminated = True
+                    truncated = True
+                    reward = -1000 * (leaving_infantry - existing_infantry)
                 return self.observation, reward, terminated, truncated, info
 
         for infantry_to_move, (from_territory, to_territory) in zip(infantry_to_move_per_adjacency, adjacencies):
@@ -97,17 +100,18 @@ class AxisAndAlliesEnv(gym.Env):
         p2_lost = self.observation['territory_owner'][P2_CAPITAL] == 0
         if p1_lost or p2_lost:
             terminated = True
+            if p1_lost:
+                reward = -1000
+            else:
+                info['is_success'] = True
+                reward = 1000
 
         if not terminated:
             # TODO: keep income value in observation from last turn and use that instead
             income = np.sum([territory_value for territory, territory_value in enumerate(territory_values) if self.observation['territory_owner'][territory] == self.current_player_turn])
             new_infantry_amount = np.floor(income/COST_OF_INFANTRY)
             current_player_infantry[capital_per_player[self.current_player_turn]] += new_infantry_amount
-            current_player_units_value = COST_OF_INFANTRY * np.sum(current_player_infantry)
-            other_player_units_value = COST_OF_INFANTRY * np.sum(other_player_infantry)
-            reward = income + current_player_units_value - other_player_units_value
-        else:
-            reward = 1000
+            reward = self.boardScore() - prev_board_score
 
         self.current_player_turn = not self.current_player_turn
         
@@ -117,7 +121,7 @@ class AxisAndAlliesEnv(gym.Env):
                     too_high_indices = [i for i,x in enumerate(self.observation[key]) if x >= int(self.observation_space[key].nvec[i])]
                     for i in too_high_indices:
                         self.observation[key][i] = int(self.observation_space[key].nvec[i]) - 1
-        
+
         return self.observation, reward, terminated, truncated, info
    
     def recordFrame(self):
@@ -152,10 +156,16 @@ class AxisAndAlliesEnv(gym.Env):
             plt.show()
         elif self.render_mode == "rgb_array":
             return np.array(fig.canvas.renderer.buffer_rgba())
+        
+    def boardScore(self):
+        p1_income = np.sum([territory_value for territory, territory_value in enumerate(territory_values) if self.observation['territory_owner'][territory] == 0])
+        p2_income = np.sum([territory_value for territory, territory_value in enumerate(territory_values) if self.observation['territory_owner'][territory] == 1])
+        p1_units_value = COST_OF_INFANTRY * np.sum(self.observation['player1_infantry'])
+        p2_units_value = COST_OF_INFANTRY * np.sum(self.observation['player2_infantry'])
+        return p1_income + p1_units_value - (p2_income - p2_units_value)
 
 if __name__ == "__main__":
     game = AxisAndAlliesEnv(render_mode="human")
-
     obs, info = game.reset()
     print('first observation after reset: ', obs)
     game.render()

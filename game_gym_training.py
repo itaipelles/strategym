@@ -9,9 +9,10 @@ import math
 if __name__ == "__main__":
     env = make_vec_env(AxisAndAlliesEnv_selfPlay, n_envs=4) 
     model = PPO("MultiInputPolicy", env, verbose=1)
+    # model = PPO.load("test_model", env=env)
     update_AI_callback = SelfPlayCallback(env,model, updateRate=math.inf)
 
-    model.learn(total_timesteps=200000, callback=update_AI_callback)
+    model.learn(total_timesteps=10000000, callback=update_AI_callback)
     model.save("test_model")
     del model
 

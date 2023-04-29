@@ -10,6 +10,7 @@ class AxisAndAlliesEnv_selfPlay(AxisAndAlliesEnv):
     AI_policy:PPO
 
     def __init__(self):
+        super().__init__()
         self.AI_policy = None
         pass
     def step(self, action):
@@ -23,8 +24,8 @@ class AxisAndAlliesEnv_selfPlay(AxisAndAlliesEnv):
         else:
             action_AI, _ = self.AI_policy.predict(observation)
 
-        new_observation, new_reward, terminated, truncated, info = super().step(action_AI)
-        return new_observation, reward, terminated, truncated, info
+        new_observation, new_reward, terminated, truncated, = super().step(action_AI)
+        return new_observation, reward + new_reward, terminated, truncated, info
         
     def reset(self):
         return super().reset()
