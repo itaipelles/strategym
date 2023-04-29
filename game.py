@@ -5,6 +5,8 @@ from battle_calculator import infantry_battle
 import networkx as nx
 import matplotlib.pyplot as plt
 from PIL import Image
+import copy
+import time
 
 territories = [0,1,2,3,4,5]
 territory_values = [6,3,3,3,3,6]
@@ -14,22 +16,9 @@ adjacencies = adjacencies + inverse_adjacencies
 
 num_of_territories = len(territories)
 num_of_adjacencies = len(adjacencies)
-movement_action_space = spaces.Box(low=0.0, high=1.0, shape=(num_of_adjacencies,))
 
 MAX_INFANTRY_PER_TERRITORY = 50
 player_infantry_shape = MAX_INFANTRY_PER_TERRITORY*np.ones(num_of_territories)
-
-_observation_space = spaces.Dict({
-    'player1_infantry': spaces.MultiDiscrete(player_infantry_shape),
-    'player2_infantry': spaces.MultiDiscrete(player_infantry_shape),
-    'territory_owner': spaces.MultiBinary(num_of_territories),
-})
-
-opening_observation = {
-    'player1_infantry': [10,2,2,0,0,0],
-    'player2_infantry': [0,0,0,2,2,10],
-    'territory_owner': [0,0,0,1,1,1]
-}
 
 P1_CAPITAL = 0
 P2_CAPITAL = 5
@@ -37,11 +26,23 @@ capital_per_player = [P1_CAPITAL,P2_CAPITAL]
 
 COST_OF_INFANTRY = 3
 
+test_space = spaces.MultiDiscrete(player_infantry_shape)
+test_space2 = spaces.MultiBinary(num_of_territories)
+
 class AxisAndAlliesEnv(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"]}
-    observation_space = _observation_space
-    action_space = movement_action_space
-
+    observation_space = spaces.Dict({
+        'player1_infantry': spaces.MultiDiscrete(player_infantry_shape),
+        'player2_infantry': spaces.MultiDiscrete(player_infantry_shape),
+        'territory_owner': spaces.MultiBinary(num_of_territories),
+        })
+    action_space : spaces.Box = spaces.Box(low=0.0, high=1.0, shape=(num_of_adjacencies,))
+    opening_observation = {
+        'player1_infantry': [10,2,2,0,0,0],
+        'player2_infantry': [0,0,0,2,2,10],
+        'territory_owner': [0,0,0,1,1,1]
+        }
+    
     def __init__(self,  render_mode="human"):
         self.G = nx.Graph()
         self.G.add_nodes_from(territories)
@@ -51,17 +52,14 @@ class AxisAndAlliesEnv(gym.Env):
         pass
 
     def reset(self, seed=None, options=None):
-        # We need the following line to seed self.np_random
-        super().reset(seed=seed)
-
         # TODO: copy the opening observation
-        self.observation = opening_observation
+        self.observation = copy.deepcopy(self.opening_observation)
         self.current_player_turn = 0
-        info = None
+        info = {}
         return self.observation, info
     
     def step(self, action):
-        info = None
+        info = {}
         terminated = False
         truncated = False
 
@@ -89,7 +87,7 @@ class AxisAndAlliesEnv(gym.Env):
         
         for territory in np.unique(contested_territories):
             new_attack_inf, new_defend_inf = infantry_battle(current_player_infantry[territory], other_player_infantry[territory])
-            print(f'Combat! territory {territory} attack {current_player_infantry[territory]} -> {new_attack_inf}, defend {other_player_infantry[territory]} -> {new_defend_inf}')
+            # print(f'Combat! territory {territory} attack {current_player_infantry[territory]} -> {new_attack_inf}, defend {other_player_infantry[territory]} -> {new_defend_inf}')
             current_player_infantry[territory] = new_attack_inf
             other_player_infantry[territory] = new_defend_inf
             if new_attack_inf > 0:
@@ -112,7 +110,14 @@ class AxisAndAlliesEnv(gym.Env):
             reward = 1000
 
         self.current_player_turn = not self.current_player_turn
-            
+        
+        for key in self.observation_space:
+            if(isinstance(self.observation_space[key], spaces.MultiDiscrete)):
+                if(not self.observation_space[key].contains(self.observation[key])):
+                    too_high_indices = [i for i,x in enumerate(self.observation[key]) if x >= int(self.observation_space[key].nvec[i])]
+                    for i in too_high_indices:
+                        self.observation[key][i] = int(self.observation_space[key].nvec[i]) - 1
+        
         return self.observation, reward, terminated, truncated, info
    
     def recordFrame(self):
@@ -150,12 +155,13 @@ class AxisAndAlliesEnv(gym.Env):
 
 if __name__ == "__main__":
     game = AxisAndAlliesEnv(render_mode="human")
+
     obs, info = game.reset()
     print('first observation after reset: ', obs)
     game.render()
-    num_of_steps = 4
+    num_of_steps = 0
     for i in range(num_of_steps):
-        action = movement_action_space.sample()
+        action = game.action_space.sample()
         print(f'random action {i+1}: ', action)
         observation, reward, terminated, truncated, info = game.step(action)
 
