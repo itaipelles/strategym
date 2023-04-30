@@ -13,19 +13,19 @@ class AxisAndAlliesEnv_selfPlay(AxisAndAlliesEnv):
         super().__init__()
         self.AI_policy = None
         pass
-    def step(self, action):
+    def step(self, action, render_mid_round:bool= False):
         observation, reward, terminated, truncated, info = super().step(action)
-        if terminated or truncated:
-            return observation, reward, terminated, truncated, info
-        
+        if(render_mid_round):
+            super().render()
+            
         action_AI = None
         if self.AI_policy is None:
             action_AI = self.action_space.sample()
         else:
             action_AI, _ = self.AI_policy.predict(observation)
 
-        new_observation, new_reward, terminated, truncated, new_info= super().step(action_AI)
-        return new_observation, reward + new_reward, terminated, truncated, info
+        new_observation, new_reward, new_terminated, new_truncated, new_info = super().step(action_AI)
+        return new_observation, (reward + new_reward), (terminated or new_terminated), (truncated or new_truncated), info
         
     def reset(self):
         return super().reset()
