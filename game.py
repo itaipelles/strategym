@@ -4,9 +4,11 @@ from gymnasium import spaces
 from battle_calculator import infantry_battle
 import networkx as nx
 import matplotlib.pyplot as plt
-from PIL import Image
+import matplotlib
+matplotlib.use('Qt5Agg')
 import copy
 import time
+
 
 territories = [0,1,2,3,4,5]
 territory_values = [6,3,3,3,3,6]
@@ -44,6 +46,8 @@ class AxisAndAlliesEnv(gym.Env):
         }
     
     def __init__(self,  render_mode="human"):
+        self.info = {'is_success' : False, 'valid_move' : True}
+        self.lastMove = [0]*num_of_adjacencies
         self.G = nx.Graph()
         self.G.add_nodes_from(territories)
         self.G.add_edges_from(inverse_adjacencies)
@@ -54,11 +58,12 @@ class AxisAndAlliesEnv(gym.Env):
     def reset(self, seed=None, options=None):
         self.observation = copy.deepcopy(self.opening_observation)
         self.current_player_turn = 0
-        info = {'is_success' : False}
-        return self.observation, info
+        self.info = {'is_success' : False, 'valid_move' : True}
+        return self.observation, self.info
     
     def step(self, action):
-        info = {}
+        self.info['is_success'] = False
+        self.info['valid_move'] = True
         terminated = False
         truncated = False
         reward = 0
@@ -74,13 +79,16 @@ class AxisAndAlliesEnv(gym.Env):
             infantry_to_move_per_adjacency.append(infantry_to_move)
             sum_of_infantry_leaving_each_territory[from_territory] += infantry_to_move
 
+        self.lastMove = infantry_to_move_per_adjacency
         for existing_infantry, leaving_infantry in zip(current_player_infantry, sum_of_infantry_leaving_each_territory):
             if leaving_infantry > existing_infantry:
                 if not self.current_player_turn:
                     terminated = True
                     truncated = True
                     reward = -1000 * (leaving_infantry - existing_infantry)
-                return self.observation, reward, terminated, truncated, info
+                self.info['valid_move'] = False
+                self.current_player_turn = not self.current_player_turn
+                return self.observation, reward, terminated, truncated, self.info
 
         for infantry_to_move, (from_territory, to_territory) in zip(infantry_to_move_per_adjacency, adjacencies):
             current_player_infantry[from_territory] -= infantry_to_move
@@ -90,7 +98,6 @@ class AxisAndAlliesEnv(gym.Env):
         
         for territory in np.unique(contested_territories):
             new_attack_inf, new_defend_inf = infantry_battle(current_player_infantry[territory], other_player_infantry[territory])
-            # print(f'Combat! territory {territory} attack {current_player_infantry[territory]} -> {new_attack_inf}, defend {other_player_infantry[territory]} -> {new_defend_inf}')
             current_player_infantry[territory] = new_attack_inf
             other_player_infantry[territory] = new_defend_inf
             if new_attack_inf > 0:
@@ -103,7 +110,7 @@ class AxisAndAlliesEnv(gym.Env):
             if p1_lost:
                 reward = -1000
             else:
-                info['is_success'] = True
+                self.info['is_success'] = True
                 reward = 1000
 
         if not terminated:
@@ -122,7 +129,7 @@ class AxisAndAlliesEnv(gym.Env):
                     for i in too_high_indices:
                         self.observation[key][i] = int(self.observation_space[key].nvec[i]) - 1
 
-        return self.observation, reward, terminated, truncated, info
+        return self.observation, reward, terminated, truncated, self.info
    
     def recordFrame(self):
         #TODO: make this function save and image for each frame instead of overwriting it. maybe even open a new folder for each run?
@@ -147,13 +154,30 @@ class AxisAndAlliesEnv(gym.Env):
 
         nx.draw_networkx_labels(self.G,G_p1_pos, labels = dict(zip(territories,self.observation['player1_infantry'])), font_color = "blue")
         nx.draw_networkx_labels(self.G,G_p2_pos, labels = dict(zip(territories,self.observation['player2_infantry'])), font_color = "red")
-        fig.canvas.draw()
 
+        edge_labels = {tuple(sorted(x)) : 0 for x in inverse_adjacencies}
+        for infantry_to_move, (from_territory, to_territory) in zip(self.lastMove, adjacencies):
+            if(to_territory < from_territory):
+                edge_labels[(to_territory,from_territory)] -= infantry_to_move
+            else:
+                edge_labels[(from_territory,to_territory)] += infantry_to_move
+
+        nx.draw_networkx_edge_labels(
+            self.G, self.G_node_pos,
+            edge_labels=edge_labels,
+            font_color='green')
+
+        fig.set_facecolor("white")
+        if(not self.info['valid_move']):
+            fig.set_facecolor("gray")
+
+        fig.canvas.draw()
         if(record_flag):
             self.recordFrame()
 
         if self.render_mode == "human":
             plt.show()
+            
         elif self.render_mode == "rgb_array":
             return np.array(fig.canvas.renderer.buffer_rgba())
         
@@ -164,12 +188,12 @@ class AxisAndAlliesEnv(gym.Env):
         p2_units_value = COST_OF_INFANTRY * np.sum(self.observation['player2_infantry'])
         return p1_income + p1_units_value - (p2_income - p2_units_value)
 
-if __name__ == "__main__":
+if __name__ == "__main__":    
     game = AxisAndAlliesEnv(render_mode="human")
     obs, info = game.reset()
     print('first observation after reset: ', obs)
     game.render()
-    num_of_steps = 0
+    num_of_steps = 10
     for i in range(num_of_steps):
         action = game.action_space.sample()
         print(f'random action {i+1}: ', action)
