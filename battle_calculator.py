@@ -1,15 +1,14 @@
 import numpy as np
+import random
 
 INFANTRY_ATTACK_VALUE = 2
 INFANTRY_DEFENCE_VALUE = 2
 
+
 def get_dmg(attack_value):
     dmg = attack_value // 6
     left_over_attack = attack_value % 6
-    if left_over_attack > 0:
-        die = np.random.randint(1,6)
-        if die <= left_over_attack:
-            dmg += 1
+    dmg += (random.randint(1, 6) <= left_over_attack)
     return dmg
 
 def infantry_battle(attacker_inf, defender_inf):
