@@ -69,7 +69,7 @@ class AxisAndAlliesEnv(gym.Env):
         self.turn_counter += 1
         self.info['is_success'] = False
         self.info['valid_move'] = True
-        reward = -1
+        reward = -10
         terminated = False
         truncated = (self.turn_counter > 30)
         self.prev_boardScore = self.boardScore()
@@ -122,10 +122,10 @@ class AxisAndAlliesEnv(gym.Env):
         if p1_lost or p2_lost:
             terminated = True
             if p1_lost:
-                reward = -100
+                reward = -1000
             else:
                 self.info['is_success'] = True
-                reward = 100
+                reward = 1000
         else:
             income = np.sum([territory_value for territory, territory_value in enumerate(territory_values) if self.observation['territory_owner'][territory] == self.current_player_turn])
             new_infantry_amount = np.floor(income/COST_OF_INFANTRY)
@@ -195,7 +195,7 @@ class AxisAndAlliesEnv(gym.Env):
         p2_income = np.sum([territory_value for territory, territory_value in enumerate(territory_values) if self.observation['territory_owner'][territory] == 1])
         p1_units_value = COST_OF_INFANTRY * np.sum(self.observation['player1_infantry'])
         p2_units_value = COST_OF_INFANTRY * np.sum(self.observation['player2_infantry'])
-        return p1_income + p1_units_value - (p2_income - p2_units_value)
+        return p1_income + p1_units_value - (p2_income + p2_units_value)
     
 if __name__ == "__main__":    
     game = AxisAndAlliesEnv(render_mode="human")
