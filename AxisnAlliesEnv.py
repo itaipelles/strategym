@@ -31,11 +31,11 @@ COST_OF_INFANTRY = 3
 class AxisAndAlliesEnv(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"]}
     observation_space = spaces.Dict({
-        'player1_infantry': spaces.MultiDiscrete(MAX_INFANTRY_PER_TERRITORY*np.ones(num_of_territories)),
-        'player2_infantry': spaces.MultiDiscrete(MAX_INFANTRY_PER_TERRITORY*np.ones(num_of_territories)),
+        'player1_infantry': spaces.Box(low=0.0, high=MAX_INFANTRY_PER_TERRITORY, shape=(num_of_territories,)),
+        'player2_infantry': spaces.Box(low=0.0, high=MAX_INFANTRY_PER_TERRITORY, shape=(num_of_territories,)),
         'territory_owner': spaces.MultiBinary(num_of_territories),
         })
-    action_space = spaces.MultiDiscrete(MAX_INFANTRY_PER_TERRITORY*np.ones(num_of_adjacencies))
+    action_space = spaces.Box(low=0.0, high=1.0, shape=(num_of_adjacencies,))
     
     opening_observation = {
         'player1_infantry': np.array([10,2,2,0,0,0]),
