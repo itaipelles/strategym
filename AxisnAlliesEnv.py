@@ -42,8 +42,8 @@ class AxisAndAlliesEnv(gym.Env):
         'player2_infantry': np.array([0,0,0,2,2,10]),
         'territory_owner': np.array([0,0,0,1,1,1])
         }
-    
-    def __init__(self, discrete_action_space = True, render_mode="human"):
+    turn_counter = 0
+    def __init__(self, discrete_action_space = False, render_mode="human"):
         self.discrete_action_space = discrete_action_space
         if self.discrete_action_space:
             self.action_space = spaces.MultiDiscrete(MAX_INFANTRY_PER_TERRITORY*np.ones(num_of_adjacencies))
@@ -58,6 +58,7 @@ class AxisAndAlliesEnv(gym.Env):
         pass
 
     def reset(self, seed=None, options=None):
+        self.turn_counter = 0
         self.observation = copy.deepcopy(self.opening_observation)
         self.current_player_turn = 0
         self.current_move = [0]*num_of_adjacencies
@@ -65,11 +66,12 @@ class AxisAndAlliesEnv(gym.Env):
         return self.observation, self.info
     
     def step(self, action):
+        self.turn_counter += 1
         self.info['is_success'] = False
         self.info['valid_move'] = True
         reward = -1
         terminated = False
-        truncated = False
+        truncated = (self.turn_counter > 30)
         self.prev_boardScore = self.boardScore()
 
         current_player_infantry = self.observation['player2_infantry'] if self.current_player_turn else self.observation['player1_infantry']
@@ -92,7 +94,8 @@ class AxisAndAlliesEnv(gym.Env):
             if sum_of_infantry_leaving_territory > infantry_amount:
                 self.current_move[adjacency_indices] = (self.current_move[adjacency_indices] * infantry_amount) // sum_of_infantry_leaving_territory
                 self.info['valid_move'] = False
-                reward -= 1
+                reward -= 1*(sum_of_infantry_leaving_territory - infantry_amount)
+                # return self.observation, reward, terminated, truncated, self.info
 
         # move infantries
         current_player_infantry -= np.bincount(adjacencies[:, 0], self.current_move, minlength=num_of_territories).astype(int)
@@ -126,9 +129,9 @@ class AxisAndAlliesEnv(gym.Env):
         else:
             income = np.sum([territory_value for territory, territory_value in enumerate(territory_values) if self.observation['territory_owner'][territory] == self.current_player_turn])
             new_infantry_amount = np.floor(income/COST_OF_INFANTRY)
-            # current_player_infantry[capital_per_player[self.current_player_turn]] += new_infantry_amount 
+            current_player_infantry[capital_per_player[self.current_player_turn]] += new_infantry_amount 
             self.current_player_turn = not self.current_player_turn
-            reward += (self.boardScore() - self.prev_boardScore)/10
+            reward += (self.boardScore() - self.prev_boardScore)
 
         return self.observation, reward, terminated, truncated, self.info
     

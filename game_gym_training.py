@@ -13,15 +13,15 @@ if __name__ == "__main__":
     policy_kwargs = dict(net_arch=[64, 64])
     model = PPO('MultiInputPolicy', env, verbose=4, n_steps=512, batch_size=512, policy_kwargs=policy_kwargs, device='cpu')
     # model = PPO.load("test_model", env=env)
-    update_AI_callback = SelfPlayCallback(env,model, updateRate=200)
+    update_AI_callback = SelfPlayCallback(env,model, updateRate=math.inf)
 
     model.learn(total_timesteps=1000000, callback=update_AI_callback)
-    model.save("test_model")
+    model.save("test_model2")
     del model
 
     # run test
     # env = AxisAndAlliesEnv_selfPlay()
-    # model = PPO.load("test_model", env=env,device='cpu')
+    # model = PPO.load("test_model2", env=env,device='cpu')
     # obs, _ = env.reset()
     # for i in range(2000):
     #     action, _states = model.predict(obs)
