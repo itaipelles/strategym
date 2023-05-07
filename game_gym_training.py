@@ -18,12 +18,3 @@ if __name__ == "__main__":
     model.learn(total_timesteps=1000000, callback=update_AI_callback)
     model.save("test_model2")
     del model
-
-    # run test
-    # env = AxisAndAlliesEnv_selfPlay()
-    # model = PPO.load("test_model2", env=env,device='cpu')
-    # obs, _ = env.reset()
-    # for i in range(2000):
-    #     action, _states = model.predict(obs)
-    #     obs, rewards, done, truncated, info = env.step(action, render_mid_round=True)
-    #     env.render()
