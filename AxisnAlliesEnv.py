@@ -39,7 +39,7 @@ class AxisAndAlliesEnv(gym.Env):
     
     opening_observation = {
         'player1_infantry': np.array([10,2,2,0,0,0]),
-        'player2_infantry': np.array([0,0,0,2,2,10]),
+        'player2_infantry': np.array([0,0,0,2,2,30]),
         'territory_owner': np.array([0,0,0,1,1,1])
         }
     turn_counter = 0
@@ -95,12 +95,11 @@ class AxisAndAlliesEnv(gym.Env):
                 self.current_move[adjacency_indices] = (self.current_move[adjacency_indices] * infantry_amount) // sum_of_infantry_leaving_territory
                 self.info['valid_move'] = False
                 reward -= 1*(sum_of_infantry_leaving_territory - infantry_amount)
-                # return self.observation, reward, terminated, truncated, self.info
 
         # move infantries
         current_player_infantry -= np.bincount(adjacencies[:, 0], self.current_move, minlength=num_of_territories).astype(int)
         current_player_infantry += np.bincount(adjacencies[:, 1], self.current_move, minlength=num_of_territories).astype(int)
-        contested_territories = np.nonzero(np.logical_and(current_player_infantry > 0, other_player_infantry > 0))[0]
+        contested_territories = np.nonzero(np.logical_and(current_player_infantry > 0, self.observation['territory_owner'] == (1 - self.current_player_turn)))[0]
 
         # resolve fights
         for territory in np.unique(contested_territories):
@@ -130,7 +129,7 @@ class AxisAndAlliesEnv(gym.Env):
             income = np.sum([territory_value for territory, territory_value in enumerate(territory_values) if self.observation['territory_owner'][territory] == self.current_player_turn])
             new_infantry_amount = np.floor(income/COST_OF_INFANTRY)
             current_player_infantry[capital_per_player[self.current_player_turn]] += new_infantry_amount 
-            self.current_player_turn = not self.current_player_turn
+            self.current_player_turn = 1 - self.current_player_turn
             reward += (self.boardScore() - self.prev_boardScore)
 
         return self.observation, reward, terminated, truncated, self.info
@@ -203,7 +202,7 @@ if __name__ == "__main__":
     action = game.action_space.sample()
     observation, reward, terminated, truncated, info = game.step(action)
     game.render()
-    num_of_steps = 10
+    num_of_steps = 100
     for i in range(num_of_steps):
         action = game.action_space.sample()
         observation, reward, terminated, truncated, info = game.step(action)
