@@ -39,7 +39,7 @@ class AxisAndAlliesEnv(gym.Env):
     
     opening_observation = {
         'player1_infantry': np.array([10,2,2,0,0,0]),
-        'player2_infantry': np.array([0,0,0,2,2,12]),
+        'player2_infantry': np.array([0,0,0,2,2,30]),
         'territory_owner': np.array([0,0,0,1,1,1])
         }
     turn_counter = 0
@@ -61,12 +61,13 @@ class AxisAndAlliesEnv(gym.Env):
         return self.observation, self.info
     
     def step(self, action):
-        self.turn_counter += 1
+        if self.current_player_turn == 0:
+            self.turn_counter += 1
         self.info['is_success'] = False
         self.info['valid_move'] = True
         reward = -10
         terminated = False
-        truncated = (self.turn_counter > 30)
+        truncated = (self.turn_counter > 100)
         self.prev_boardScore = self.boardScore()
 
         current_player_infantry = self.observation['player2_infantry'] if self.current_player_turn else self.observation['player1_infantry']
