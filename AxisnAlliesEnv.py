@@ -39,17 +39,12 @@ class AxisAndAlliesEnv(gym.Env):
     
     opening_observation = {
         'player1_infantry': np.array([10,2,2,0,0,0]),
-        'player2_infantry': np.array([0,0,0,2,2,30]),
+        'player2_infantry': np.array([0,0,0,2,2,12]),
         'territory_owner': np.array([0,0,0,1,1,1])
         }
     turn_counter = 0
-    def __init__(self, discrete_action_space = False, render_mode="human"):
-        self.discrete_action_space = discrete_action_space
-        if self.discrete_action_space:
-            self.action_space = spaces.MultiDiscrete(MAX_INFANTRY_PER_TERRITORY*np.ones(num_of_adjacencies))
-        else:
-            self.action_space = spaces.Box(low=0.0, high=1.0, shape=(num_of_adjacencies,))
-
+    starting_player = 0
+    def __init__(self,render_mode="human"):
         self.G = nx.Graph()
         self.G.add_nodes_from(territories)
         self.G.add_edges_from(inverse_adjacencies)
@@ -60,7 +55,7 @@ class AxisAndAlliesEnv(gym.Env):
     def reset(self, seed=None, options=None):
         self.turn_counter = 0
         self.observation = copy.deepcopy(self.opening_observation)
-        self.current_player_turn = 0
+        self.current_player_turn = self.starting_player
         self.current_move = [0]*num_of_adjacencies
         self.info = {'is_success' : False, 'valid_move' : True}
         return self.observation, self.info
@@ -79,13 +74,10 @@ class AxisAndAlliesEnv(gym.Env):
         
         # translate continuous action into discrete
         self.current_move = []
-        if self.discrete_action_space:
-            self.current_move = action
-        else:
-            for percentage, (from_territory, to_territory) in zip(action, adjacencies):
-                infantry_to_move = np.round(percentage * current_player_infantry[from_territory])
-                self.current_move.append(infantry_to_move)
-            self.current_move = np.array(self.current_move)
+        for percentage, (from_territory, to_territory) in zip(action, adjacencies):
+            infantry_to_move = np.round(percentage * current_player_infantry[from_territory])
+            self.current_move.append(infantry_to_move)
+        self.current_move = np.array(self.current_move)
 
         # action legality
         for territory, infantry_amount in zip(territories, current_player_infantry):
