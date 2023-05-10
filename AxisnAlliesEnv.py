@@ -39,7 +39,7 @@ class AxisAndAlliesEnv(gym.Env):
     
     opening_observation = {
         'player1_infantry': np.array([10,2,2,0,0,0]),
-        'player2_infantry': np.array([0,0,0,2,2,30]),
+        'player2_infantry': np.array([0,0,0,2,2,10]),
         'territory_owner': np.array([0,0,0,1,1,1])
         }
     turn_counter = 0
@@ -60,12 +60,14 @@ class AxisAndAlliesEnv(gym.Env):
         self.info = {'is_success' : False, 'valid_move' : True}
         return self.observation, self.info
     
-    def step(self, action):
+    def step(self, action, add_penalties = False):
         if self.current_player_turn == 0:
             self.turn_counter += 1
         self.info['is_success'] = False
         self.info['valid_move'] = True
-        reward = -10
+        reward = 0
+        if add_penalties:
+            reward -= np.sign(0.5-self.current_player_turn)*10
         terminated = False
         truncated = (self.turn_counter > 100)
         self.prev_boardScore = self.boardScore()
@@ -87,7 +89,8 @@ class AxisAndAlliesEnv(gym.Env):
             if sum_of_infantry_leaving_territory > infantry_amount:
                 self.current_move[adjacency_indices] = (self.current_move[adjacency_indices] * infantry_amount) // sum_of_infantry_leaving_territory
                 self.info['valid_move'] = False
-                reward -= 1*(sum_of_infantry_leaving_territory - infantry_amount)
+                if add_penalties:
+                     reward -= np.sign(0.5-self.current_player_turn)*(sum_of_infantry_leaving_territory - infantry_amount)
 
         # move infantries
         current_player_infantry -= np.bincount(adjacencies[:, 0], self.current_move, minlength=num_of_territories).astype(int)
@@ -125,7 +128,7 @@ class AxisAndAlliesEnv(gym.Env):
             self.current_player_turn = 1 - self.current_player_turn
             reward += (self.boardScore() - self.prev_boardScore)
 
-        return self.observation, reward, terminated, truncated, self.info
+        return copy.deepcopy(self.observation), reward, terminated, truncated, copy.deepcopy(self.info)
     
     def action_masks(self) -> List[bool]:
 
