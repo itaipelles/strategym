@@ -1,1 +1,3 @@
 *.pyc
+models/
+model_checkpoints/
