@@ -10,7 +10,7 @@ class AxisAndAlliesEnv_selfPlay(AxisAndAlliesEnv):
     AI_policies:dict[Players,PPO]
     currently_training_player:Players
 
-    def __init__(self, training_player:Players, AI_policies:dict = {}):
+    def __init__(self, training_player:Players = None, AI_policies:dict = {}):
         super().__init__()
         self.currently_training_player = training_player
         self.AI_policies = AI_policies
