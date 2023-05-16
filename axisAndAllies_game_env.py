@@ -8,7 +8,7 @@ class AxisAndAlliesEnv(gym.Env):
     observation_space:spaces.Dict
     action_space:spaces.Box
     game:Game
-    def __init__(self,render_mode="human"):
+    def __init__(self):
         self.game = set_game()
         self.observation_space = spaces.Dict({
         'player1_infantry': spaces.Box(low=0.0, high=math.inf, shape=(self.game.board.num_of_territories(),)),
