@@ -11,7 +11,7 @@ class AxisAndAlliesEnv_selfPlay(AxisAndAlliesEnv):
     AI_policies:dict[Players,PPO]
     currently_training_player:Players
 
-    def __init__(self, AI_policies:dict = {}, render_mode = "human"):
+    def __init__(self, AI_policies:dict = {}, render_mode = None):
         super().__init__()
         self.AI_policies = AI_policies
         self.render_mode = render_mode
