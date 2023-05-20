@@ -33,7 +33,7 @@ class AxisAndAlliesEnv(gym.Env):
         terminated = False
         reward = 0
 
-        victory, illegal_moves = self.game.step(action)
+        victory, illegal_moves = self.game.play_turn(action)
         observation = self.get_observation()
         info['Illegal_Moves'] = illegal_moves
 

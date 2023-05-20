@@ -113,7 +113,7 @@ class Game():
         self.current_move = [0]*self.board.num_of_adjacencies()
         self.illegal_moves_count = 0
 
-    def step(self, action:np.ndarray[float]) -> tuple[bool, int]:
+    def play_turn(self, action:np.ndarray[float]) -> tuple[bool, int]:
         self.illegal_moves_count = 0
         if self.current_player_turn == self.round_playing_order[0]:
             self.round_counter += 1
@@ -256,7 +256,7 @@ if __name__ == "__main__":
     action_space = spaces.Box(low=0,high=1,shape=(len(game.board.adjacencies),))
     for i in range(100):
         action = action_space.sample()
-        victory,_ = game.step(action)
+        victory,_ = game.play_turn(action)
         game.render()
         if victory:
             game.reset()
