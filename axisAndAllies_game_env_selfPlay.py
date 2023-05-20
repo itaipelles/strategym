@@ -54,7 +54,10 @@ class AxisAndAlliesEnv_selfPlay(AxisAndAlliesEnv):
         return observation, cummulative_reward, terminated, truncated, info
 
     def calc_networth_gain(self, board_value_prev):
-        return 0
+        board_value_current = self.game.boardScores()
+        board_value_diff = board_value_current - board_value_prev
+        round_reward = np.sum([value if self.game.are_allies(self.currently_training_player, Players(i)) else -value for i,value in enumerate(board_value_diff)])/10
+        return round_reward
     
     def render(self):
         super().render()
