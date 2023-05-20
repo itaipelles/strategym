@@ -1,8 +1,7 @@
 import gymnasium as gym
 from gymnasium import spaces
 import math
-from axisAndAllies_game import Game, Players, set_game_v2
-
+from axisAndAllies_game.game import Game, Players, set_game_v2, GameRenderer
 
 class AxisAndAlliesEnv(gym.Env):
     observation_space:spaces.Dict
@@ -10,6 +9,7 @@ class AxisAndAlliesEnv(gym.Env):
     game:Game
     def __init__(self):
         self.game = set_game_v2()
+        self.renderer = GameRenderer(self.game.board)
         self.observation_space = spaces.Dict({
         'player1_infantry': spaces.Box(low=0.0, high=math.inf, shape=(self.game.board.num_of_territories(),)),
         'player2_infantry': spaces.Box(low=0.0, high=math.inf, shape=(self.game.board.num_of_territories(),)),
@@ -24,7 +24,7 @@ class AxisAndAlliesEnv(gym.Env):
         return observation, info
     
     def render(self):
-        self.game.render()
+        self.renderer.render(self.game.board,self.game.current_move,self.game.illegal_moves_count>0)
         return
     
     def step(self, action):
@@ -48,7 +48,7 @@ class AxisAndAlliesEnv(gym.Env):
     
     def get_observation(self):
         observation = {
-        'player1_infantry': self.game.get_player_infantry(Players.RUSSIA),
-        'player2_infantry': self.game.get_player_infantry(Players.GERMANY),
-        'territory_owner': self.game.get_owners()}
+        'player1_infantry': self.game.board.get_player_infantry(Players.RUSSIA),
+        'player2_infantry': self.game.board.get_player_infantry(Players.GERMANY),
+        'territory_owner': self.game.board.get_owners()}
         return observation

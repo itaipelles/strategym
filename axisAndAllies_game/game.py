@@ -1,87 +1,9 @@
-import copy, random
+import copy
 import numpy as np
-from enum import Enum
-from collections import namedtuple
-import networkx as nx
-import matplotlib.pyplot as plt
-import matplotlib
-matplotlib.use('Qt5Agg')
+from board import *
+from axisAndAllies_game.gameRenderer import GameRenderer
+from battleCalculator import BattleCalculator
 
-
-class Players(Enum):
-    RUSSIA = 0
-    GERMANY = 1
-
-class Units(Enum):
-    INFANTRY  = 0
-    ARTILLERY = 1
-
-Stats = namedtuple("stats", "attack defense movement cost")
-UNITS_STATS = {Units.INFANTRY:Stats(2,2,1,3),
-               Units.ARTILLERY:Stats(2,2,1,4)}
-
-class Territory():
-    owner:Players
-    income:int
-    units:dict
-    def __init__(self, owner:Players, income:int = 0, units:dict = {}):
-        self.owner = owner
-        self.income = income
-        self.units = {}
-        for player in Players:
-            if player in units:
-                self.units[player] = np.array(units[player])
-            else:
-                self.units[player] = np.zeros(len(Units.__members__), dtype=int)
-
-class Board():
-    territories_id:list[int]
-    territories:list[Territory]
-    adjacencies:np.ndarray[tuple[int,int]]
-    capitals:set[int]
-    def __init__(self, territories:list[Territory], adjacencies:list[tuple[int,int]], capitals:set[int]):
-
-        self.territories = territories
-        self.adjacencies = np.array(adjacencies + [(j,i) for (i,j) in adjacencies if (j,i) not in adjacencies])
-        self.capitals = copy.deepcopy(set(capitals))
-        self.territories_id = range(len(self.territories))
-    def num_of_territories(self):
-        return len(self.territories)
-    def num_of_adjacencies(self):
-        return len(self.adjacencies)
-
-class BattleCalcultor():
-    def get_dmg(attack_value :int):
-        dmg = attack_value // 6
-        left_over_attack = attack_value % 6
-        dmg += (random.randint(1, 6) <= left_over_attack)
-        return dmg
-
-    def infantry_battle(attacker_inf : int, defender_inf : int):
-        while attacker_inf>0 and defender_inf>0:
-            attack_dmg = BattleCalcultor.get_dmg(attacker_inf*UNITS_STATS[Units.INFANTRY].attack)
-            defence_dmg = BattleCalcultor.get_dmg(defender_inf*UNITS_STATS[Units.INFANTRY].defense)
-            attacker_inf = max(0, attacker_inf-defence_dmg)
-            defender_inf = max(0, defender_inf-attack_dmg)
-        return attacker_inf, defender_inf
-    
-    def resolve_fight(territory:Territory, attacker:Players, alliances:dict):
-        defenders:list[Players] = []
-        for player in Players:
-            if alliances[attacker] != alliances[player]:
-                defenders += [player]
-        if len(defenders) == 0:
-            territory.owner = attacker
-            return
-        atk_inf = territory.units[attacker][Units.INFANTRY.value]
-        dfnd_inf = territory.units[defenders[0]][Units.INFANTRY.value]
-        new_attack_inf, new_defend_inf = BattleCalcultor.infantry_battle(atk_inf, dfnd_inf)
-        territory.units[attacker][Units.INFANTRY.value] = new_attack_inf
-        territory.units[defenders[0]][Units.INFANTRY.value] = new_defend_inf
-        if new_attack_inf > 0:
-            territory.owner = attacker
-        return
-    
 class Game():
     board:Board
     starting_board_state:Board
@@ -91,7 +13,6 @@ class Game():
     win_condition:int
     alliances:dict[Players,str]
     current_move:list[int]
-    G:nx.Graph
     illegal_moves_count:int
 
     def __init__(self, board:Board, round_playing_order:list[Players], win_condition:int, alliances:dict):
@@ -100,13 +21,6 @@ class Game():
         self.win_condition = copy.deepcopy(win_condition)
         self.alliances = copy.deepcopy(alliances)
         self.reset()
-
-        self.G = nx.Graph()
-        self.G.add_nodes_from(self.board.territories_id)
-        self.G.add_edges_from(board.adjacencies)
-        self.G_node_pos = nx.spectral_layout(self.G)
-        self.G_node_pos = nx.spring_layout(self.G, pos=self.G_node_pos)
-        
 
     def reset(self):
         self.board = copy.deepcopy(self.starting_board_state)
@@ -147,7 +61,7 @@ class Game():
 
         # resolve fights
         for territory in set(contested_territories):
-            BattleCalcultor.resolve_fight(territory=territory, attacker=self.current_player_turn, alliances=self.alliances)
+            BattleCalculator.resolve_fight(territory=territory, attacker=self.current_player_turn, alliances=self.alliances)
 
         # reinforcements
         income = np.sum([territory.income for territory in self.board.territories if territory.owner == self.current_player_turn])
@@ -167,72 +81,8 @@ class Game():
             return True, self.illegal_moves_count
         return False, self.illegal_moves_count
     
-    def get_owners(self):
-        return np.array([territory.owner.value for territory in self.board.territories])
-    
-    def get_player_infantry(self, player:Players):
-        result = np.array([territory.units[player][Units.INFANTRY.value] for territory in self.board.territories])
-        return result
-    
     def are_allies(self,player1:Players, player2:Players):
         return self.alliances[player1] == self.alliances[player2]
-    
-    def boardScores(self):
-        scores = np.zeros(shape = (len(Players),))
-        for player in Players:
-            scores[player.value] = np.sum([territory.income for territory in self.board.territories if territory.owner == player])
-            for territory in self.board.territories:
-                scores[player.value] += territory.units[player][Units.INFANTRY.value]*UNITS_STATS[Units.INFANTRY].cost
-        
-        return scores
-    
-    def render(self):
-        # the commented lines might be needed when we scale to more types of units. for now i print the infantries directly
-        # nx.set_node_attributes(G, dict(zip(territories,obs['player1_infantry'])), name = 'p1_infantry')
-        # nx.set_node_attributes(G, dict(zip(territories,obs['player2_infantry'])), name = 'p2_infantry')
-        
-        fig = plt.figure()
-        plt.axis('off')
-        plt.tight_layout()
-
-        G_p1_pos = self.G_node_pos.copy()
-        G_p2_pos = self.G_node_pos.copy()
-        for i, key in (self.G_node_pos.items()):
-            G_p1_pos[i] = self.G_node_pos[i] + [0, 0.15]
-            G_p2_pos[i] = self.G_node_pos[i] - [0, 0.15]
-        
-        color_map = []
-        for territory in self.board.territories:
-            if territory.owner==Players.RUSSIA:
-                color_map.append('red')
-            elif territory.owner==Players.GERMANY:
-                color_map.append('black')
-
-        nx.draw_networkx(self.G, self.G_node_pos, with_labels = True, 
-                node_color = color_map, node_size=500,
-                font_color = "white", font_size = 15)
-        nx.draw_networkx_labels(self.G,G_p1_pos, labels = dict(zip(self.board.territories_id,self.get_player_infantry(Players.RUSSIA))), font_color = "red")
-        nx.draw_networkx_labels(self.G,G_p2_pos, labels = dict(zip(self.board.territories_id,self.get_player_infantry(Players.GERMANY))), font_color = "black")
-
-        edge_labels = {tuple(sorted(x)) : 0 for x in self.board.adjacencies}
-        for infantry_to_move, (from_territory, to_territory) in zip(self.current_move, self.board.adjacencies):
-            if(to_territory < from_territory):
-                edge_labels[(to_territory,from_territory)] -= infantry_to_move
-            else:
-                edge_labels[(from_territory,to_territory)] += infantry_to_move
-
-        nx.draw_networkx_edge_labels(
-            self.G, self.G_node_pos,
-            edge_labels=edge_labels,
-            font_color='green')
-
-        fig.set_facecolor("white")
-        if(self.illegal_moves_count > 0):
-            fig.set_facecolor("gray")
-
-        fig.canvas.draw()
-        plt.show()
-        return
 
 def set_game():
     # set up board
@@ -270,12 +120,13 @@ def set_game_v2():
 if __name__ == "__main__":
     from gymnasium import spaces
     game = set_game_v2()
-    game.render()
+    renderer = GameRenderer(game.board)
+    renderer.render(game.board,game.current_move,game.illegal_moves_count>0)
     action_space = spaces.Box(low=0,high=1,shape=(len(game.board.adjacencies),))
     for i in range(100):
         action = action_space.sample()
         victory,_ = game.play_turn(action)
-        game.render()
+        renderer.render(game.board,game.current_move,game.illegal_moves_count>0)
         if victory:
             game.reset()
-            game.render()
+            renderer.render(game.board,game.current_move,game.illegal_moves_count>0)
