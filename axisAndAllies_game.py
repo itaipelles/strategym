@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Qt5Agg')
 
+
 class Players(Enum):
     RUSSIA = 0
     GERMANY = 1
@@ -103,7 +104,8 @@ class Game():
         self.G = nx.Graph()
         self.G.add_nodes_from(self.board.territories_id)
         self.G.add_edges_from(board.adjacencies)
-        self.G_node_pos = nx.spring_layout(self.G)
+        self.G_node_pos = nx.spectral_layout(self.G)
+        self.G_node_pos = nx.spring_layout(self.G, pos=self.G_node_pos)
         
 
     def reset(self):
