@@ -1,10 +1,5 @@
-import gymnasium as gym
-from gymnasium import spaces
-from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecEnv
-from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3 import PPO
-import math
-from axisAndAllies_game_env import AxisAndAlliesEnv, Players
+from game_env import AxisAndAlliesEnv, Players
 import numpy as np
 
 class AxisAndAlliesEnv_selfPlay(AxisAndAlliesEnv):

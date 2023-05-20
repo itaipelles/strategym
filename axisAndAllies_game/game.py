@@ -1,7 +1,7 @@
 import copy
 import numpy as np
 from board import *
-from axisAndAllies_game.gameRenderer import GameRenderer
+from gameRenderer import GameRenderer
 from battleCalculator import BattleCalculator
 
 class Game():

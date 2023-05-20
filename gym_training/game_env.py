@@ -1,7 +1,9 @@
 import gymnasium as gym
 from gymnasium import spaces
 import math
-from axisAndAllies_game.game import Game, Players, set_game_v2, GameRenderer
+from ..axisAndAllies_game.board import Players
+from ..axisAndAllies_game.gameRenderer import GameRenderer 
+from ..axisAndAllies_game.game import Game, set_game_v2
 
 class AxisAndAlliesEnv(gym.Env):
     observation_space:spaces.Dict

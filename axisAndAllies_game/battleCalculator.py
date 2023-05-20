@@ -1,4 +1,4 @@
-import copy, random
+import random
 from board import Units, UNITS_STATS, Players, Territory
 
 class BattleCalculator:

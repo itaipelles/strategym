@@ -1,5 +1,6 @@
 from stable_baselines3 import PPO
-from gym_training.axisAndAllies_game_env_selfPlay import AxisAndAlliesEnv_selfPlay, Players
+from axisAndAllies_game.board import Players
+from gym_training.game_env_selfPlay import AxisAndAlliesEnv_selfPlay
 
 env = AxisAndAlliesEnv_selfPlay(Players.RUSSIA)
 model_russia = PPO.load("models/RUSSIA_model_1", env=env,device='cpu')

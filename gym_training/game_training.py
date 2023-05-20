@@ -1,10 +1,7 @@
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.common.monitor import Monitor
-from stable_baselines3.common.callbacks import BaseCallback, EvalCallback, CheckpointCallback, StopTrainingOnRewardThreshold
-from axisAndAllies_game_env_selfPlay import AxisAndAlliesEnv_selfPlay, Players
-import math
-import torch
+from stable_baselines3.common.callbacks import EvalCallback, CheckpointCallback, StopTrainingOnRewardThreshold
+from game_env_selfPlay import AxisAndAlliesEnv_selfPlay, Players
 
 if __name__ == "__main__":
     env = make_vec_env(AxisAndAlliesEnv_selfPlay, n_envs=8)
