@@ -250,10 +250,26 @@ def set_game():
     game = Game(board=board, round_playing_order=round_playing_order, win_condition=2, alliances=alliances)
     return game
 
+def set_game_v2():
+    # set up board
+    owners = [Players.RUSSIA]*8 + [Players.GERMANY]*8
+    incomes = [6]*2 + [3]*12 + [6]*2
+    units = [{owner: [2, 0]} if incomes[i] == 3 else {owner: [10, 0]} for i, owner in enumerate(owners)]
+    territories = [Territory(owner, income, unit) for owner,income,unit in zip(owners, incomes, units)]
+
+    adjacencies = [(0,2), (2,1), (0,3), (0,4), (1,5), (1,6), (3,8), (4,7), (5,7), (6,9), (7,10), (10,11), (10,12), (8,14), (11,14), (12,15), (9,15), (14,13), (15,13)]
+    capitals = [0, 1, 14,15]
+    board = Board(territories=territories, adjacencies=adjacencies, capitals=capitals)
+    # set up game
+    round_playing_order = [Players.RUSSIA, Players.GERMANY]
+    alliances = {Players.RUSSIA:'Allies', Players.GERMANY:'Axis'}
+    game = Game(board=board, round_playing_order=round_playing_order, win_condition=3, alliances=alliances)
+    return game
+
 # run game
 if __name__ == "__main__":
     from gymnasium import spaces
-    game = set_game()
+    game = set_game_v2()
     game.render()
     action_space = spaces.Box(low=0,high=1,shape=(len(game.board.adjacencies),))
     for i in range(100):

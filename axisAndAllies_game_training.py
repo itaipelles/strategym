@@ -7,7 +7,6 @@ import math
 import torch
 
 if __name__ == "__main__":
-    print(torch.cuda.is_available())
     env = make_vec_env(AxisAndAlliesEnv_selfPlay, n_envs=8)
     
     policy_kwargs = dict(net_arch=[64, 64])

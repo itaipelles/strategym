@@ -1,7 +1,7 @@
 import gymnasium as gym
 from gymnasium import spaces
 import math
-from axisAndAllies_game import Game, Players, set_game
+from axisAndAllies_game import Game, Players, set_game_v2
 
 
 class AxisAndAlliesEnv(gym.Env):
@@ -9,7 +9,7 @@ class AxisAndAlliesEnv(gym.Env):
     action_space:spaces.Box
     game:Game
     def __init__(self):
-        self.game = set_game()
+        self.game = set_game_v2()
         self.observation_space = spaces.Dict({
         'player1_infantry': spaces.Box(low=0.0, high=math.inf, shape=(self.game.board.num_of_territories(),)),
         'player2_infantry': spaces.Box(low=0.0, high=math.inf, shape=(self.game.board.num_of_territories(),)),
@@ -41,7 +41,7 @@ class AxisAndAlliesEnv(gym.Env):
             terminated = True
             reward = 100
         
-        if self.game.round_counter > 50:
+        if self.game.round_counter > 100:
             truncated = True
 
         return observation, reward, terminated, truncated, info
