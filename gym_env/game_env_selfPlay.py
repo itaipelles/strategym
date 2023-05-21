@@ -44,7 +44,7 @@ class AxisAndAlliesEnv_selfPlay(AxisAndAlliesEnv):
             if(self.render_mode == "human"):
                 self.render()
             action = self.generate_AI_action()
-            reward_sign = np.sign(self.game.are_allies(self.game.current_player_turn, self.currently_training_player) - 0.5)
+            reward_sign = 1 if self.game.are_allies(self.game.current_player_turn, self.currently_training_player) else -1
             observation, reward, terminated, truncated, info = super().step(action)
             cummulative_reward += reward_sign*reward
             if terminated or truncated:
