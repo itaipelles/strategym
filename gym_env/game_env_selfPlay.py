@@ -9,6 +9,9 @@ class AxisAndAlliesEnv_selfPlay(AxisAndAlliesEnv):
     def __init__(self, AI_policies:dict = {}, render_mode = None):
         super().__init__()
         self.AI_policies = AI_policies
+        for player in Players:
+            if(player not in self.AI_policies):
+                self.AI_policies[player] = None
         self.render_mode = render_mode
 
     def reset(self, seed=None, options=None):
@@ -18,7 +21,7 @@ class AxisAndAlliesEnv_selfPlay(AxisAndAlliesEnv):
         return observation, info
 
     def generate_AI_action(self):
-        if(self.game.current_player_turn in self.AI_policies):
+        if(self.AI_policies[self.game.current_player_turn] is not None):
             return self.AI_policies[self.game.current_player_turn].predict(self.get_observation())[0]
         return self.action_space.sample()
         
