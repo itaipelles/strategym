@@ -48,13 +48,16 @@ class Board():
     def get_player_infantry(self, player:Players):
         result = np.array([territory.units[player][Units.INFANTRY.value] for territory in self.territories])
         return result
-    def boardScores(self):
+    def board_scores(self):
         scores = np.zeros(shape=(len(Players),))
         for player in Players:
-            territory_incomes = np.array([territory.income for territory in self.territories if territory.owner == player])
-            territory_infantry_units = np.array([territory.units[player][Units.INFANTRY.value] for territory in self.territories])
-            infantry_costs = UNITS_STATS[Units.INFANTRY].cost
+            territories_income = 0
+            units_value = 0
+            for territory in self.territories:
+                units_value += territory.units[player][Units.INFANTRY.value]*UNITS_STATS[Units.INFANTRY].cost
+                if territory.owner == player:
+                    territories_income += territory.income
             
-            scores[player.value] = np.sum(territory_incomes) + np.sum(territory_infantry_units * infantry_costs)
+            scores[player.value] = units_value + territories_income
 
         return scores
