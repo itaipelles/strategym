@@ -2,7 +2,7 @@ from stable_baselines3 import PPO
 from gym_env.game_env import AxisAndAlliesEnv, Players
 import numpy as np
 
-class AxisAndAlliesEnv_selfPlay(AxisAndAlliesEnv):
+class AxisAndAlliesEnvSelfPlay(AxisAndAlliesEnv):
     AI_policies:dict[Players,PPO]
     currently_training_player:Players
 
@@ -26,13 +26,13 @@ class AxisAndAlliesEnv_selfPlay(AxisAndAlliesEnv):
         return self.action_space.sample()
         
     def step(self, action):
-        board_value_prev = self.game.board.boardScores()
+        # board_value_prev = self.game.board.boardScores()
         observation, player_reward, terminated, truncated, info = self.training_player_step(action)
         if terminated:
             return observation, player_reward, terminated, truncated, info
         player_reward += -1*(1 + info['Illegal_Moves'])
         observation, AI_reward, terminated, truncated, info = self.run_AI_turns()
-        round_reward = self.calc_networth_gain(board_value_prev)
+        round_reward = 0#self.calc_networth_gain(board_value_prev)
         return observation, player_reward + AI_reward + round_reward, terminated, truncated, info
     
     def training_player_step(self,action):

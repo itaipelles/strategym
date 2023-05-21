@@ -1,16 +1,16 @@
 import gymnasium as gym
 from gymnasium import spaces
 import math
-from axisAndAllies_game.board import Players
-from axisAndAllies_game.gameRenderer import GameRenderer 
-from axisAndAllies_game.game import Game, set_game_v2, set_game
+from axis_and_allies_game.board import Players
+from axis_and_allies_game.gameRenderer import GameRenderer 
+from axis_and_allies_game.game import Game, set_game_v2, set_game
 
 class AxisAndAlliesEnv(gym.Env):
     observation_space:spaces.Dict
     action_space:spaces.Box
     game:Game
     def __init__(self):
-        self.game = set_game()
+        self.game = set_game_v2()
         self.renderer = GameRenderer(self.game.board)
         self.observation_space = spaces.Dict({
         'player1_infantry': spaces.Box(low=0.0, high=math.inf, shape=(self.game.board.num_of_territories(),)),

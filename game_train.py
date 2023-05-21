@@ -1,14 +1,14 @@
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.callbacks import EvalCallback, CheckpointCallback, StopTrainingOnRewardThreshold
-from gym_env.game_env_selfPlay import AxisAndAlliesEnv_selfPlay, Players
+from gym_env.game_env_self_play import AxisAndAlliesEnvSelfPlay, Players
 
 if __name__ == "__main__":
-    env = make_vec_env(AxisAndAlliesEnv_selfPlay, n_envs=8)
+    env = make_vec_env(AxisAndAlliesEnvSelfPlay, n_envs=8)
     
     policy_kwargs = dict(net_arch=[64, 64])
-    model_russia = PPO('MultiInputPolicy', env, verbose=4, n_steps=512, batch_size=512, policy_kwargs=policy_kwargs, device='cpu')
-    model_germany = PPO('MultiInputPolicy', env, verbose=4, n_steps=512, batch_size=512, policy_kwargs=policy_kwargs, device='cpu')
+    model_russia = PPO('MultiInputPolicy', env, verbose=4, n_steps=512*4, batch_size=512, policy_kwargs=policy_kwargs, device='cpu')
+    model_germany = PPO('MultiInputPolicy', env, verbose=4, n_steps=512*4, batch_size=512, policy_kwargs=policy_kwargs, device='cpu')
     policies = {Players.RUSSIA:model_russia, Players.GERMANY:model_germany}
     env.env_method('set_policies', **{'AI_policies' : policies})
     

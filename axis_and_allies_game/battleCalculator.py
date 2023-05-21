@@ -1,5 +1,5 @@
 import random
-from axisAndAllies_game.board import Units, UNITS_STATS, Players, Territory
+from axis_and_allies_game.board import Units, UNITS_STATS, Players, Territory
 
 class BattleCalculator:
     def get_dmg(attack_value :int):

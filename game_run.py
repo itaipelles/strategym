@@ -1,11 +1,11 @@
 from stable_baselines3 import PPO
-from axisAndAllies_game.board import Players
-from gym_env.game_env_selfPlay import AxisAndAlliesEnv_selfPlay
+from axis_and_allies_game.board import Players
+from gym_env.game_env_self_play import AxisAndAlliesEnvSelfPlay
 
-env = AxisAndAlliesEnv_selfPlay(render_mode="human")
+env = AxisAndAlliesEnvSelfPlay(render_mode="human")
 env.set_player(Players.RUSSIA)
-model_russia = PPO.load("models/RUSSIA_model_1", env=env,device='cpu')
-model_germany = PPO.load("models/GERMANY_model_2", env=env,device='cpu')
+model_russia = PPO.load("models/RUSSIA_model_2", env=env,device='cpu')
+model_germany = PPO.load("models/GERMANY_model_1", env=env,device='cpu')
 policies = {Players.RUSSIA:model_russia, Players.GERMANY:model_germany}
 env.set_policies(policies)
 obs, _ = env.reset()
