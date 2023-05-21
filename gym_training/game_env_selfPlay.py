@@ -1,5 +1,5 @@
 from stable_baselines3 import PPO
-from game_env import AxisAndAlliesEnv, Players
+from gym_training.game_env import AxisAndAlliesEnv, Players
 import numpy as np
 
 class AxisAndAlliesEnv_selfPlay(AxisAndAlliesEnv):
@@ -23,7 +23,7 @@ class AxisAndAlliesEnv_selfPlay(AxisAndAlliesEnv):
         return self.action_space.sample()
         
     def step(self, action):
-        board_value_prev = self.game.boardScores()
+        board_value_prev = self.game.board.boardScores()
         observation, player_reward, terminated, truncated, info = self.training_player_step(action)
         if terminated:
             return observation, player_reward, terminated, truncated, info
@@ -49,7 +49,7 @@ class AxisAndAlliesEnv_selfPlay(AxisAndAlliesEnv):
         return observation, cummulative_reward, terminated, truncated, info
 
     def calc_networth_gain(self, board_value_prev):
-        board_value_current = self.game.boardScores()
+        board_value_current = self.game.board.boardScores()
         board_value_diff = board_value_current - board_value_prev
         round_reward = np.sum([value if self.game.are_allies(self.currently_training_player, Players(i)) else -value for i,value in enumerate(board_value_diff)])/10
         return round_reward

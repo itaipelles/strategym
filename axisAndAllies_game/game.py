@@ -1,8 +1,8 @@
 import copy
 import numpy as np
-from board import *
-from gameRenderer import GameRenderer
-from battleCalculator import BattleCalculator
+from axisAndAllies_game.board import *
+from axisAndAllies_game.gameRenderer import GameRenderer
+from axisAndAllies_game.battleCalculator import BattleCalculator
 
 class Game():
     board:Board

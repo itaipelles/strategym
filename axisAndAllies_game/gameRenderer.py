@@ -2,7 +2,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Qt5Agg')
-from board import Board, Players
+from axisAndAllies_game.board import Board, Players
 
 class GameRenderer:
     def __init__(self, board:Board) -> None:
