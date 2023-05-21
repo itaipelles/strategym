@@ -1,5 +1,5 @@
 from stable_baselines3 import PPO
-from gym_training.game_env import AxisAndAlliesEnv, Players
+from gym_env.game_env import AxisAndAlliesEnv, Players
 import numpy as np
 
 class AxisAndAlliesEnv_selfPlay(AxisAndAlliesEnv):

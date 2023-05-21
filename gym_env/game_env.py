@@ -1,7 +1,6 @@
 import gymnasium as gym
 from gymnasium import spaces
 import math
-# from .. import run_game
 from axisAndAllies_game.board import Players
 from axisAndAllies_game.gameRenderer import GameRenderer 
 from axisAndAllies_game.game import Game, set_game_v2, set_game

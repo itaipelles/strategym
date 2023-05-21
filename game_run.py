@@ -1,6 +1,6 @@
 from stable_baselines3 import PPO
 from axisAndAllies_game.board import Players
-from gym_training.game_env_selfPlay import AxisAndAlliesEnv_selfPlay
+from gym_env.game_env_selfPlay import AxisAndAlliesEnv_selfPlay
 
 env = AxisAndAlliesEnv_selfPlay(render_mode="human")
 env.set_player(Players.RUSSIA)
