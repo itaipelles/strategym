@@ -2,7 +2,7 @@ import copy
 import numpy as np
 from axis_and_allies_game.board import *
 from axis_and_allies_game.gameRenderer import GameRenderer
-from axis_and_allies_game.battleCalculator import BattleCalculator
+from axis_and_allies_game.battle_calculator import resolve_fight
 
 class Game():
     board:Board
@@ -61,7 +61,7 @@ class Game():
 
         # resolve fights
         for territory in set(contested_territories):
-            BattleCalculator.resolve_fight(territory=territory, attacker=self.current_player_turn, alliances=self.alliances)
+            resolve_fight(territory=territory, attacker=self.current_player_turn, alliances=self.alliances)
 
         # reinforcements
         income = np.sum([territory.income for territory in self.board.territories if territory.owner == self.current_player_turn])
