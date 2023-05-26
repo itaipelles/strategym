@@ -36,4 +36,6 @@ def resolve_fight(territory:Territory, attacker:Players, alliances:dict):
 if __name__ == 'main':
     attacker_inf = 10
     defender_inf = 5
-    print(infantry_battle(attacker_inf, defender_inf))
+    t = Territory(Players.GERMANY, 0, {Players.GERMANY: [20,0], Players.RUSSIA: [25,0]})
+    resolve_fight(t, Players.RUSSIA, {})
+    print(t)
