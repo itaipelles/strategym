@@ -17,9 +17,10 @@ def infantry_battle(attacker_inf : int, defender_inf : int):
 
 def resolve_fight(territory:Territory, attacker:Players, alliances:dict):
     defenders:list[Players] = []
-    for player in Players:
-        if alliances[attacker] != alliances[player]:
-            defenders += [player]
+    defenders += [territory.owner]
+    # for player in Players:
+    #     if alliances[attacker] != alliances[player]:
+    #         defenders += [player]
     if len(defenders) == 0:
         territory.owner = attacker
         return
@@ -38,4 +39,5 @@ if __name__ == '__main__':
     defender_inf = 5
     t = Territory(Players.GERMANY, 0, {Players.GERMANY: [20,0], Players.RUSSIA: [25,0]})
     resolve_fight(t, Players.RUSSIA, {})
-    print(t)
+    print(t.units[Players.GERMANY])
+    print(t.units[Players.RUSSIA])
