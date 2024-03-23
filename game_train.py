@@ -4,6 +4,7 @@ from stable_baselines3.common.callbacks import EvalCallback, CheckpointCallback,
 from stable_baselines3.common.logger import configure
 from gym_env.game_env_self_play import AxisAndAlliesEnvSelfPlay, Players
 
+
 if __name__ == "__main__":
     env = make_vec_env(AxisAndAlliesEnvSelfPlay, n_envs=8)
     
@@ -27,3 +28,6 @@ if __name__ == "__main__":
             env.reset()
             policies[player].learn(total_timesteps=1000000, callback=[checkpoint_callback, eval_callback])
             policies[player].save(f'./models/{player.name}_model_{generation_num}')
+
+
+    

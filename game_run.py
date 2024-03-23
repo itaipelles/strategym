@@ -5,7 +5,7 @@ from gym_env.game_env_self_play import AxisAndAlliesEnvSelfPlay
 env = AxisAndAlliesEnvSelfPlay(render_mode="human")
 env.set_player(Players.RUSSIA)
 model_russia = PPO.load("models/RUSSIA_model_2", env=env,device='cpu')
-model_germany = PPO.load("models/GERMANY_model_1", env=env,device='cpu')
+model_germany = PPO.load("models/GERMANY_model_2", env=env,device='cpu')
 policies = {Players.RUSSIA:model_russia, Players.GERMANY:model_germany}
 env.set_policies(policies)
 obs, _ = env.reset()
